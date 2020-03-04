@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="338409f4-4b1f-47f0-ac12-601eb27545c6" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/common/common/const.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/common/common/const.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/common/detector/darknet.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/common/detector/darknet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/common/detector/haarfacedetector.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/common/detector/haarfacedetector.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/common/detector/libdarknet.so" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/common/detector/libdarknet.so" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/common/detector/objectdetector.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/common/detector/objectdetector.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/common/utils/data_association.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/common/utils/data_association.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/common/utils/kalman_filter.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/common/utils/kalman_filter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/common/utils/karman.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/common/utils/karman.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/common/utils/preprocess.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/common/utils/preprocess.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/instance/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/instance/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/models/config/vehicle.cfg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/models/config/vehicle.data" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/models/config/vehicle.names" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/models/weights/vehicle.weights" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/services/storages/fs_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/services/storages/fs_storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/services/storages/minio_storage.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/services/storages/minio_storage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/services/storages/storage_fs.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/services/storages/storage_fs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/utils/math.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/utils/math.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vp-savevideo/utils/module_loading.py" beforeDir="false" afterPath="$PROJECT_DIR$/vp-savevideo/utils/module_loading.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/vp-savevideo" />
+  </component>
+  <component name="ProjectId" id="1XxoamAy4HuK0i02AQwrP2xyZD3" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+    <option name="showMembers" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="338409f4-4b1f-47f0-ac12-601eb27545c6" name="Default Changelist" comment="" />
+      <created>1581997171160</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1581997171160</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="461" y="154" width="424" height="484" key="FileChooserDialogImpl" timestamp="1581997369736">
+      <screen x="0" y="27" width="1366" height="741" />
+    </state>
+    <state x="461" y="154" width="424" height="484" key="FileChooserDialogImpl/0.27.1366.741@0.27.1366.741" timestamp="1581997369736" />
+  </component>
+</project>

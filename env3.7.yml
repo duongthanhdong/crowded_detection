@@ -1,0 +1,13 @@
+name: py3.7
+dependencies:
+  - python=3.7
+  - tensorflow-gpu
+  - Cython
+  - contextlib2
+  - jupyter
+  - matplotlib
+  - pillow
+  - lxml
+  - numpy
+  - pandas
+  - tk
