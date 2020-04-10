@@ -1,5 +1,12 @@
 class Group_Object():
-    def __init__(self,id, total, member, bbox):
+    # def __init__(self,id, total, member, bbox):
+    #     self.__id = id
+    #     self.__total = total
+    #     self.__member = member
+    #     self.__bbox = bbox
+
+    def __init__(self,id,total,member,bbox):
+
         self.__id = id
         self.__total = total
         self.__member = member
@@ -19,9 +26,9 @@ class Group_Object():
     def update_bbox(self,bbox):
         self.__bbox = bbox
 
-    def add_member(self,trk_id,element):
-        self.__member[trk_id] = element
-        self.__bbox = self.__merge_bbox(self.__bbox,element)
+    def add_member(self,trk_id,bbox):
+        self.__member[trk_id] = bbox
+        self.__bbox = self.__merge_bbox(self.__bbox,bbox)
         self.__total = len(self.get_member())
 
     def update_member(self,trk,bbox):
