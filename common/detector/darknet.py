@@ -1,3 +1,7 @@
+"""
+create by: Huynh Long
+create date: 01-01-2020
+"""
 from ctypes import *
 import math
 import random
@@ -5,30 +9,37 @@ import cv2
 import numpy as np
 from datetime import datetime
 from io import BytesIO
-import os, sys, time
+import os
+import sys
+import time
 import uuid
 import math
 from instance.config import settings
+
+
 def sample(probs):
     s = sum(probs)
-    probs = [a/s for a in probs]
+    probs = [a / s for a in probs]
     r = random.uniform(0, 1)
     for i in range(len(probs)):
         r = r - probs[i]
         if r <= 0:
             return i
-    return len(probs)-1
+    return len(probs) - 1
+
 
 def c_array(ctype, values):
-    arr = (ctype*len(values))()
+    arr = (ctype * len(values))()
     arr[:] = values
     return arr
+
 
 class BOX(Structure):
     _fields_ = [("x", c_float),
                 ("y", c_float),
                 ("w", c_float),
                 ("h", c_float)]
+
 
 class DETECTION(Structure):
     _fields_ = [("bbox", BOX),
@@ -45,18 +56,19 @@ class IMAGE(Structure):
                 ("c", c_int),
                 ("data", POINTER(c_float))]
 
+
 class METADATA(Structure):
     _fields_ = [("classes", c_int),
                 ("names", POINTER(c_char_p))]
-
-    
 
 
 class IplROI(Structure):
     pass
 
+
 class IplTileInfo(Structure):
     pass
+
 
 class IplImage(Structure):
     pass
@@ -64,7 +76,7 @@ class IplImage(Structure):
 IplImage._fields_ = [
     ('nSize', c_int),
     ('ID', c_int),
-    ('nChannels', c_int),               
+    ('nChannels', c_int),
     ('alphaChannel', c_int),
     ('depth', c_int),
     ('colorModel', c_char * 4),
@@ -78,7 +90,7 @@ IplImage._fields_ = [
     ('maskROI', POINTER(IplImage)),
     ('imageId', c_void_p),
     ('tileInfo', POINTER(IplTileInfo)),
-    ('imageSize', c_int),          
+    ('imageSize', c_int),
     ('imageData', c_char_p),
     ('widthStep', c_int),
     ('BorderMode', c_int * 4),
@@ -95,8 +107,10 @@ class iplimage_t(Structure):
 
 
 #lib = CDLL("/home/pjreddie/documents/darknet/libdarknet.so", RTLD_GLOBAL)
-# lib = CDLL("/opt/darknet/libdarknet.so", RTLD_GLOBAL)
+#lib = CDLL("/opt/darknet/libdarknet.so", RTLD_GLOBAL)
+# lib = CDLL("/home/server-face/face/darknet/libdarknet.so", RTLD_GLOBAL)
 lib = CDLL("/home/thanhdong/Documents/TAP_SU/vp-savevideo/common/detector/libdarknet.so", RTLD_GLOBAL)
+
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]
@@ -177,14 +191,15 @@ def classify(net, meta, im):
 
 def array_to_image(arr):
     # need to return old values to avoid python freeing memory
-    arr = arr.transpose(2,0,1)
+    arr = arr.transpose(2, 0, 1)
     c, h, w = arr.shape[0:3]
     arr = np.ascontiguousarray(arr.flat, dtype=np.float32) / 255.0
     data = arr.ctypes.data_as(POINTER(c_float))
-    im = IMAGE(w,h,c,data)
+    im = IMAGE(w, h, c, data)
     return im, arr
 
-def detect(net, meta, image, thresh=.2, hier_thresh=.2, nms=.6,height_ori=416,width_ori=416):
+
+def detect(net, meta, image, thresh=.2, hier_thresh=.2, nms=.6, height_ori=416, width_ori=416):
     im, image = array_to_image(image)
     rgbgr_image(im)
     num = c_int(0)
@@ -192,37 +207,43 @@ def detect(net, meta, image, thresh=.2, hier_thresh=.2, nms=.6,height_ori=416,wi
     predict_image(net, im)
     dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, None, 0, pnum)
     num = pnum[0]
-    if nms: do_nms_obj(dets, num, meta.classes, nms)
+    if nms:
+        do_nms_obj(dets, num, 1, nms)
     res = []
-    # print(num)
     for j in range(num):
-        for i in range(meta.classes):
-            a = dets[j].prob[i]
-            if a > 0:
-                obj={}
+        a = dets[j].prob[0:1]
+        if any(a):
+            ai = np.array(a).nonzero()[0]
+            for i in ai:
+                obj = {}
                 b = dets[j].bbox
-                x = int(b.x - b.w / 2.)/width_ori
-                y = int(b.y - b.h / 2.)/height_ori
-                w = b.w/width_ori
-                h = b.h/height_ori
-                obj["name"]=meta.names[i].decode()
-                obj["id"]=i
-                obj["bbox"]=[x,y,w,h]
-                obj["prob"]=a
+                x = int(b.x - b.w / 2.) / width_ori
+                y = int(b.y - b.h / 2.) / height_ori
+                w = b.w / width_ori
+                h = b.h / height_ori
+                obj["name"] = meta.names[i].decode()
+                obj["id"] = i
+                obj["bbox"] = [x, y, w, h]
+                obj["prob"] = a[i]
                 res.append(obj)
+
     #res = sorted(res, key=lambda x: -x["prob"])
-    if isinstance(image, bytes): free_image(im)
+    if isinstance(image, bytes):
+        free_image(im)
     free_detections(dets, num)
     return res
+
+
 class YoloDetector:
+
     def __init__(self):
-        self.net = load_net(settings.CONFIG_MODEL_YOLO.encode(), settings.WEIGHTS_MODEL_YOLO.encode(), 0)
-        self.meta = load_meta(settings.DATA_MODEL_YOLO.encode())
-        print(settings.DATA_MODEL_YOLO.encode())
-    def detect(self,image,thresh=.4, hier_thresh=.4, nms=.6):
-        image = cv2.resize(image, (416,416))
-        # cv2.imshow("image",image)
-        # cv2.waitKey(0)
+        # self.net = load_net(settings.CONFIG_MODEL_YOLO.encode(), settings.WEIGHTS_MODEL_YOLO.encode(), 0)
+        # self.meta = load_meta(settings.DATA_MODEL_YOLO.encode())
+        self.net = load_net("models/config/person.cfg".encode(), "models/weights/person_150000.weights".encode(), 0)
+        self.meta = load_meta("models/config/person.data".encode())
+
+    def detect(self, image, thresh=.1, hier_thresh=.1, nms=.5):
+        image = cv2.resize(image, (416, 416))
         height_ori, width_ori = image.shape[:2]
-        objs=detect(self.net,self.meta,image,thresh,hier_thresh,nms,height_ori,width_ori)
+        objs = detect(self.net, self.meta, image, thresh, hier_thresh, nms, height_ori, width_ori)
         return objs

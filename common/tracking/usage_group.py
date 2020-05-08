@@ -1,5 +1,5 @@
 import math
-from crowed_detection.common.tracking.group import Group_Object
+from .group import Group_Object
 from crowed_detection.utils.math import bbox_xywh_to_xyxy
 import numpy as np
 def iou(bb_test,bb_gt):
@@ -23,7 +23,7 @@ class Usage_Group():
         self.__thresh_distance = thresh_distance
         self.__thresh_people = thresh_people
         self.__notification = False
-        self.__max_age = 5
+        self.__max_age = 1
         self.__age = 0
 
     def __check_distance(self, last_element, bbox, distance_thresh, img_width, img_height):
@@ -105,48 +105,76 @@ class Usage_Group():
                     self.__manage_group[belong_group[0]].add_member(member, members[member])
                 del self.__manage_group[belong_group[num_group]]
 
-    def __check_violate(self):
-        check = False
-        notification = False
-        for group in self.__manage_group:
-            if self.__manage_group[group].get_total() >= self.__thresh_people:
-                check = True
-                break
-        if check:
-            notification = self.__violet_crow() # age +1
-            self.__notification = notification
-        else:
-            self.update()
-
-        return self.__notification
-
-    def process(self, objs, width, height):
-        for i, obj in enumerate(objs):
-            # print(obj)
-            # print(type(obj))
-            # frame_id = obj["frame_id"]
-            bbox = obj["bbox"]
-            self.__mergeGroup_OR_create_new(i, bbox, width, height)
-        return self.__check_violate()
-
-    def __violet_crow(self):
+    def __violate_crow(self):
         self.__age +=1
-        if self.__max_age <= self.__age:
+        # print(self.__age)
+        # print("hello")
+        if self.__max_age < self.__age:
             return True
         return False
 
-    def get_list_info_group(self):
-        list_bbox_group = []
+    def __check_violate(self,violate):
+        check = violate
+        notification = False
+        if check:
+            notification = self.__violate_crow() # age +1
+            # self.__notification = notification
+        else:
+            self.__update()
+        self.__notification = notification
+        return self.__notification
+
+    def __get_list_info_group(self):
+        list_info_group = []
+        violate = False
         for group in self.__manage_group:
             total = self.__manage_group[group].get_total()
+            if total >= self.__thresh_people:
+                violate = True
             info = {
                 "number_member" : total,
                 "bbox":self.__manage_group[group].get_bbox()
             }
-            list_bbox_group.append(info)
-        return list_bbox_group
-    def clear_group(self):
+            list_info_group.append(info)
+        self.__clear_group()
+        check_violate = self.__check_violate(violate)
+        result = {
+            "violate": check_violate,
+            "list_info_group":list_info_group
+        }
+        return result
+
+    def __clear_group(self):
         self.__manage_group = {}
 
-    def update(self):
+    def __update(self):
         self.__age = 0
+
+    def process(self, objs, width, height):
+        """
+        Arrangement object into group and check a number of the group with the threshold and age max
+
+        return: Object :{
+                         "violate": if one of the groups violate that is True else False
+                         "list_info_group": {
+                                            "number_member": int,
+                                            "bbox" : [x,y,w,h] in format ratio
+                                            }
+                        }
+        """
+        result = {}
+        if objs ==[]:
+            self.__update()
+            result={
+                "violate":False,
+                "list_info_group":{},
+            }
+        else:
+            for i, obj in enumerate(objs):
+                bbox = obj["bbox"]
+                self.__mergeGroup_OR_create_new(i, bbox, width, height)
+            result = self.__get_list_info_group()
+        return result
+
+
+
