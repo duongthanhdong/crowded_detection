@@ -1,0 +1,29 @@
+version: '2.3'
+services:
+  crowded_vp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    #command: "python3 /app/app.py"
+    environment:
+      INPUT_STREAM_URL: "rtsp://admin:123456@192.168.1.230:7070/stream1"
+      INPUT_STREAM_ID: "1a368699-810d-43cc-96c1-3be5e853a83f"
+      OMP_NUM_THREADS: 1
+      RABBITMQ_BROKER_URL: "amqp://guest:guest@192.168.101.240:5672/"
+      CELERY_BROKER_URL: "redis://face-vp-redis:6379"
+      STREAM_REDIS: "redis://face-vp-redis:6379/2"
+      LC_ALL: C.UTF-8
+      LANG: C.UTF-8
+      NVIDIA_VISIBLE_DEVICES: all
+    image: docker-registry.vnpttiengiang.vn/crowded/crowded_vp:1.0
+    runtime: nvidia
+  celery_crowded_vp:
+    command: "celery -A run_celery worker --loglevel=INFO --concurrency=4"
+    environment:
+      RABBITMQ_BROKEN_URL : "amqp://guest:guest@192.168.101.240:5672"
+      LC_ALL: C.UTF-8
+      LANG: C.UTF-8
+      NVIDIA_VISIBLE_DEVICES: all
+    image: docker-registry.vnpttiengiang.vn/crowded/crowded_vp:1.0
+    runtime: nvidia
+
