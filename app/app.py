@@ -1,7 +1,10 @@
-# from common.detector.darknet import YoloDetector
 from common.tracking.usage_group import Usage_Group
-from services.storages.Client_MinIO import Client_MinIO
-from utils.math import bbox_xywh_to_xyxy
+from services.grpc.client_gRPC import Client_gRPC
+from services.storages.redis_storage import RedisStorage
+from common.tracking.tracking_time_distance import Tracking
+from common.detector.detect_security import DetectSecurity
+
+
 from tasks import celery_recognize
 from instance.config import settings
 
@@ -12,7 +15,6 @@ import uuid
 import argparse
 import json
 import numpy as np
-
 
 def iou(bb_test, bb_gt):
     """
@@ -34,31 +36,22 @@ class StreamProcessor():
     """docstring for StreamProcessor"""
 
     def __init__(self, *args, **kwargs):
-        # self.yolo = YoloDetector()
         self.count_skip = 0
         self.thresh_distance = settings.THRESH_DISTANCE
         self.thresh_people = settings.THRESH_PEOPLE
+        self.redis_store = RedisStorage(settings=settings)
         self.usage_group = Usage_Group(self.thresh_distance, self.thresh_people,settings.MAX_AGE)
-        self.vid = cv2.VideoCapture(settings.INPUT_VIDEO_PATH)
-        self.client_minIO = Client_MinIO()
+        # self.vid = cv2.VideoCapture(settings.INPUT_VIDEO_PATH)
+        self.vid = cv2.VideoCapture(settings.INPUT_STREAM_URL)
+        logging.warning(settings.URL_SERVER_SERVING)
+        self.client_gRPC = Client_gRPC(settings.URL_SERVER_SERVING)
+        self.detect_security = DetectSecurity()
 
-    def __preprocess_objs(self, frame_img, frame_uuid, frame_time, objs):
-        height_ori, width_ori = frame_img.shape[:2]
-        objs_process = []
-        for obj in objs:
-            bbox = bbox_xywh_to_xyxy(
-                obj['bbox'], width=width_ori, height=height_ori)
-            bbox_height = bbox[3] - bbox[1]
-            bbox_width = bbox[2] - bbox[0]
-            # if bbox_height < settings.DETECTOR_MIN_SIZE or bbox_width < settings.DETECTOR_MIN_SIZE:
-            # print("remove")
-            # continue
-            obj['class_id'] = obj['id']  # because we have one object only
-            obj['id'] = str(uuid.uuid4())
-            obj['frame_id'] = frame_uuid
-            obj['time'] = frame_time
-            objs_process.append(obj)
-        return objs_process
+    def __cache_store_frame(self, frame_uuid, frame):
+        # logging.warning("Save redis frame: uuid {}".format(frame_uuid))
+        ret, buf = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 60])
+        self.redis_store.put(frame_uuid, buf)
+        logging.warning('Save redis frame: uuid {}'.format(frame_uuid))
 
     def __drawing_group(self, frame, groups):
         height_ori, width_ori = frame.shape[:2]
@@ -91,30 +84,16 @@ class StreamProcessor():
                 cv2.putText(frame, str(round(prob, 2)), (x + 5, y_classes),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, colors[class_id], 3)
 
-    def __dump_json(self, objs, stream_id, frame_id, frame_time):
-        """
-        Function to add info(stream_id,frame_id,time) into objs
-        :param objs: objs
-        :param stream_id: pass
-        :param frame_id: pass
-        :param frame_time: pass
-        :return: Json object
-        """
-        json_result = {}
-        json_result['stream_id'] = stream_id
-        json_result["frame_id"] = frame_id
-        json_result["time"] = frame_time
-        json_result['objs'] = objs
-        return json_result
+
 
     def process_video(self):
         stream_id = settings.INPUT_STREAM_ID or str(uuid.uuid4())
         frames = 0
         logging.warning("Start Process")
+        settings.FRAME_NUM_SKIP = 5
         while True:
-
             ret, frame = self.vid.read()
-            print(frame)
+            # print(frame)
             frames += 1
             if not ret:
                 break
@@ -122,48 +101,56 @@ class StreamProcessor():
             list_info_group = []
             list_bbox_group = []
             self.manage_group = {}
-            frame_uuid = str(uuid.uuid1())
+            frame_id = str(uuid.uuid1())
             frame_time = time.time()
+            image = cv2.resize(frame,(608,608))
             if frames % int(settings.FRAME_NUM_SKIP) == 0:
-                # image = self.yolo.detect_and_cvDrawBoxes(frame)
-                # detection = self.yolo.detect(frame)
-                detection = [{'name': b'Head', 'class_id': 0, 'prob': 0.9533659219741821, 'bbox': [0.6801567422716241, -0.00302704384452418, 0.06715617054387142, 0.13841043020549573]}, {'name': b'Head', 'class_id': 0, 'prob': 0.948371171951294, 'bbox': [0.53049446720826, 0.02337013420305753, 0.060813646567495244, 0.14011718097485995]}, {'name': b'Head', 'class_id': 0, 'prob': 0.9092724919319153, 'bbox': [0.46862765362388215, 0.02699067090686999, 0.07163143157958984, 0.18226893324601023]}, {'name': b'Head', 'class_id': 0, 'prob': 0.8712153434753418, 'bbox': [0.27979607958542674, 0.1359079637025532, 0.08180948307639674, 0.22157862311915347]}, {'name': b'Head', 'class_id': 0, 'prob': 0.8295581936836243, 'bbox': [0.5855531190571032, 0.6710843287016216, 0.18545692845394737, 0.30253415358693975]}, {'name': b'Head', 'class_id': 0, 'prob': 0.7694066166877747, 'bbox': [0.9605313931640826, -0.008123837019267832, 0.04034050828532169, 0.1526144178290116]}, {'name': b'Head', 'class_id': 0, 'prob': 0.7527122497558594, 'bbox': [0.5616450184269955, 0.6153915681337055, 0.22911591278879265, 0.4107423330608167]}, {'name': b'Head', 'class_id': 0, 'prob': 0.7124632000923157, 'bbox': [0.16087324995743602, 0.29108748937907974, 0.10831388674284283, 0.2383875846862793]}]
-                # objs = self.__preprocess_objs(
-                #     frame, frame_uuid, frame_time, objs)
-                # print(objs)
-                result = self.usage_group.process(detection, width, height)
-                notification = result['violate']
-                list_info_group = result['list_info_group']
-                if notification:
-                    print("Notification")
-                # print(list_info_group)
-
-                for info in list_info_group:
-                    # print(info["number_member"], info["bbox"])
-                    list_bbox_group.append(info["bbox"][0:4])
-                image = np.copy(frame)
+                detection = self.client_gRPC.send_request(image)
+                # detection = [{'name': b'Head', 'class_id': 0, 'prob': 0.9533659219741821, 'bbox': [0.6801567422716241, -0.00302704384452418, 0.06715617054387142, 0.13841043020549573]}, {'name': b'Head', 'class_id': 0, 'prob': 0.948371171951294, 'bbox': [0.53049446720826, 0.02337013420305753, 0.060813646567495244, 0.14011718097485995]}, {'name': b'Head', 'class_id': 0, 'prob': 0.9092724919319153, 'bbox': [0.46862765362388215, 0.02699067090686999, 0.07163143157958984, 0.18226893324601023]}, {'name': b'Head', 'class_id': 0, 'prob': 0.8712153434753418, 'bbox': [0.27979607958542674, 0.1359079637025532, 0.08180948307639674, 0.22157862311915347]}, {'name': b'Head', 'class_id': 0, 'prob': 0.8295581936836243, 'bbox': [0.5855531190571032, 0.6710843287016216, 0.18545692845394737, 0.30253415358693975]}, {'name': b'Head', 'class_id': 0, 'prob': 0.7694066166877747, 'bbox': [0.9605313931640826, -0.008123837019267832, 0.04034050828532169, 0.1526144178290116]}, {'name': b'Head', 'class_id': 0, 'prob': 0.7527122497558594, 'bbox': [0.5616450184269955, 0.6153915681337055, 0.22911591278879265, 0.4107423330608167]}, {'name': b'Head', 'class_id': 0, 'prob': 0.7124632000923157, 'bbox': [0.16087324995743602, 0.29108748937907974, 0.10831388674284283, 0.2383875846862793]}]
+                detection = json.loads(detection)
+                # logging.warning(detection)
+                # image = np.copy(frame)
                 if detection:
-                    self.__drawing_frame(image, detection)
-                    self.__drawing_group(image, list_bbox_group)
-                    json_tensor = self.__dump_json(list_info_group, stream_id, frame_uuid, frame_time)
-                    # json.dumps(json_tensor)
-                    print(json_tensor)
-                    celery_recognize.delay(json_tensor)
+                    self.__drawing_frame(frame,detection)
+                    self.__cache_store_frame(frame_id, frame)
+                    crowded = settings.CROWDED_STATUS
+                    security = settings.ALERT_STATUS
+                    #save image into redis with key is frame_id
+                    #vp-security] [{"class_id":1,"id":'123','frame_id':123aidf,"time":argbuef,'name':dong,"prob":0.495,"bbox":[1,3,4,5]},...]
+                    # logging.warning("{} {}".format(type(crowded),security))
+                    object_type = "None"
+                    if security:
+                        object_type = "security"
+                        celery_recognize.delay(detection,stream_id, frame_id, frame_time, object_type)
+                        # tracking = Tracking()
+                        # a=tracking.process(detection,object_type)
+                        # print(a)
+                    if crowded:
+                        object_type = "crowded"
+                        result = self.usage_group.process(detection, width, height)
+                        notification = result['violate']
+                        if not notification:
+                            continue
+                        json_tensor = result['list_info_group']
+                        logging.warning(result)
+                        celery_recognize.delay(json_tensor,stream_id, frame_id, frame_time, object_type)
+                    logging.warning(object_type)
+                    # logging.warning(settings.INPUT_STREAM_URL)
+                    # logging.warning(stream_id)
+                    # logging.warning(detection)
 
-
-            end = time.time()
-            fps = 1 / (end - frame_time)
-            cv2.putText(frame, str(fps), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
-            cv2.imshow('output1', cv2.resize(image, (1080, 640)))
-            if cv2.waitKey(0) == ord('q'):
-                break
-
+                # end = time.time()
+                # fps = 1 / (end - frame_time)
+                # cv2.putText(frame, str(fps), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
+                # cv2.imshow('output1', cv2.resize(frame, (1080, 640)))
+                # if cv2.waitKey(1) == ord('q'):
+                #     break
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='add enviroment')
     # parser.add_argument('--video_path', default='./video/video3.mp4',
     #                     help='path to your input video (defaulte is "VMS.mp4")')
-    parser.add_argument('--video_path', default='../video/video1.mp4',
+    parser.add_argument('--video_path', default='./video/Video_test.mp4',
                         help='path to your input video (defaulte is "VMS.mp4")')
     args = parser.parse_args()
 

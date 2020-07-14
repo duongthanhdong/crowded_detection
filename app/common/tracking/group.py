@@ -26,28 +26,28 @@ class Group_Object():
     def update_bbox(self,bbox):
         self.__bbox = bbox
 
-    def add_member(self,trk_id,bbox):
-        self.__member[trk_id] = bbox
+    def add_member(self, bbox):
+        self.__member.append(bbox) 
         self.__bbox = self.__merge_bbox(self.__bbox,bbox)
         self.__total = len(self.get_member())
 
-    def update_member(self,trk,bbox):
-        self.__member[trk]=bbox
-        self.__bbox = self.__merge_bbox(self.__bbox,bbox)
+    # def update_member(self,trk,bbox):
+    #     self.__member[trk]=bbox
+    #     self.__bbox = self.__merge_bbox(self.__bbox,bbox)
 
-    def delete_member(self,trk):
-        del self.__member[trk]
-        members = self.get_member()
-        self.__total = len(members)
-        if len(members) > 0:
-            bbox_group = [1,1,-1,-1]
-            for member in members:
-                bbox = members[member]
-                bbox_group = self.__merge_bbox(bbox_group,bbox)
-            self.__bbox = bbox_group
-            return True
-        #return false when group empty after delete_member
-        return False
+    # def delete_member(self,trk):
+    #     del self.__member[trk]
+    #     members = self.get_member()
+    #     self.__total = len(members)
+    #     if len(members) > 0:
+    #         bbox_group = [1,1,-1,-1]
+    #         for member in members:
+    #             bbox = members[member]
+    #             bbox_group = self.__merge_bbox(bbox_group,bbox)
+    #         self.__bbox = bbox_group
+    #         return True
+    #     #return false when group empty after delete_member
+    #     return False
 
 
     def __merge_bbox(self, bbox_group, bbox2):

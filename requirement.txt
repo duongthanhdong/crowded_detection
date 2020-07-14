@@ -13,8 +13,13 @@ pip
 pytest
 environs
 celery
+future
 opencv-python
 rabbitmq
 pika
 minio
 time-uuid
+grpcio
+grpcio-tools
+redis
+gevent

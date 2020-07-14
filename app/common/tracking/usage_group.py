@@ -73,8 +73,8 @@ class Usage_Group():
             #     continue
             # browse through each member in group
             members = self.__manage_group[key].get_member()
-            for member in members.keys():
-                bbox_group = members[member][:4]
+            for member in members:
+                bbox_group = member
                 object_iou = iou(bbox_xywh_to_xyxy(bbox, width, height), bbox_xywh_to_xyxy(bbox_group, width, height))
                 if object_iou > 0:
                     belong_group.append(key)
@@ -98,20 +98,18 @@ class Usage_Group():
         belong_group = self.__check_member_belongGroups(bbox, width, height, skip_group)
         # if the object don't belong to any group
         if len(belong_group) == 0:
-            member = {
-                group_id: bbox,
-            }
+            member = [bbox]
             total = 1
             self.__manage_group[group_id] = Group_Object(group_id, total, member, bbox)
         # if it belong to one group only
         # merge the new one object to group that it is belong to
         else:
-            self.__manage_group[belong_group[0]].add_member(group_id, bbox)
+            self.__manage_group[belong_group[0]].add_member(bbox)
             # self.__manage_group[]
             for num_group in range(1, len(belong_group)):
                 members = self.__manage_group[belong_group[num_group]].get_member()
                 for member in members:
-                    self.__manage_group[belong_group[0]].add_member(member, members[member])
+                    self.__manage_group[belong_group[0]].add_member(member)
                 del self.__manage_group[belong_group[num_group]]
 
     def __violate_crow(self):
@@ -149,14 +147,20 @@ class Usage_Group():
         list_info_group = []
         violate = False
         for group in self.__manage_group:
+            violate_group = False
             total = self.__manage_group[group].get_total()
             if total >= self.__thresh_people:
                 violate = True
+                violate_group = True
+            if not violate_group:
+                continue
             info = {
                 "number_member" : total,
                 "bbox":self.__manage_group[group].get_bbox(),
-                "member": self.__manage_group[group].get_member()
+                "member": self.__manage_group[group].get_member(),
+                'violate': violate_group
             }
+
             list_info_group.append(info)
         self.__clear_group()
         check_violate = self.__check_violate(violate)

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crowded-app-config
+data:
+  CELERY_BROKER_URL: redis://app-redis:6379/0
+  RABBITMQ_BROKER_URL: amqp://guest:guest@security-rabbitmq:5672/
+  INPUT_STREAM_URL: rtsp://admin:123456@192.168.1.230:7070/stream1
+  INPUT_STREAM_ID: 1a368699-810d-43cc-96c1-3be5e853a83f
+  OMP_NUM_THREADS: "1"
+  URL_SERVER_SERVING : crowded-serving-svc:30053
+  FILE_STORAGE_PATH_IMAGES: /app/images
+  INPUT_STREAM_ID: a0562cee-cce7-4fd5-a433-897c9b17167c
+  API_SECURITY_URL: http://192.168.101.240:30668
+  DB_HOST: security-postgresql-local
+  DB_NAME: crowded
+  DB_PASS: crowded
+  DB_PORT: "5432"
+  DB_USER: crowded
+  THRESH_PEOPLE: "2"
+  THRESH_DISTANCE: "120"
+  MAX_AGE: "1"

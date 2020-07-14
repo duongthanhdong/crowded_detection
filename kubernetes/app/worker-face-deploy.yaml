@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: security-recognize
+  name: crowded-vp-worker
+  labels:
+    app: app-vp-worker
+    type: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-vp-worker
+      type: worker
+  template:
+    metadata:
+      labels:
+        app: app-vp-worker
+        type: worker
+    spec:
+      containers:
+      - name: crowded-vp-worker
+        image: docker-registry.vnpttiengiang.vn/crowded/crowded_vp:latest
+        command:
+        - celery
+        - -A
+        - run_celery
+        - worker
+        - --pool=gevent
+        - --concurrency=50
+        - --loglevel=INFO
+        - --without-gossip
+        - --without-mingle
+        - --without-heartbeat
+        - -Ofair
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: crowded-app-config
+        volumeMounts:
+          - mountPath: /app/images
+            name: crowded-pgvol
+      volumes:
+        - name: crowded-pgvol
+          persistentVolumeClaim:
+            claimName: crowded-storages-security-pvc
+      nodeName: face-recognize-node1
+      imagePullSecrets:
+        - name: harbor

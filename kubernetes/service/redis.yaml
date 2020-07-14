@@ -1,0 +1,34 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app-redis
+  labels:
+    app: app-redis
+spec:
+  template:
+    metadata:
+      labels:
+        app: app-redis
+        tier: redisCache
+    spec:
+      containers:
+        - image: redis
+          name: redis
+          imagePullPolicy: "IfNotPresent"
+          env:
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "yes"
+          ports:
+            - containerPort: 6379
+          
+        - name: redis-exporter
+          image: oliver006/redis_exporter:latest
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              memory: "100Mi"
+              cpu: "100m"
+              
+      nodeName: face-recognize-node2

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: security-recognize
+  name: crowded-vp-cam
+  labels:
+    app: app-vp-cam
+    type: cam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-vp-cam
+      type: cam
+  template:
+    metadata:
+      labels:
+        app: app-vp-cam
+        type: cam
+    spec:
+      containers:
+      - name: crowded-vp-cam
+        image: docker-registry.vnpttiengiang.vn/crowded/crowded_vp:latest
+        command: ['python3','/app/app.py']
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: crowded-app-config
+      imagePullSecrets:
+        - name: harbor
+      nodeName: face-recognize-node2

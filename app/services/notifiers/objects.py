@@ -33,9 +33,9 @@ class RabbitMQObjectNotifier():
         try:
             channel = self.rmq_conn.channel()
             # channel.queue_declare(queue='FaceRuleValidation')
-            channel.exchange_declare(exchange='face_detected_objects', exchange_type='topic')
+            channel.exchange_declare(exchange='topic_logs', exchange_type='topic')
             channel.basic_publish(
-                exchange='face_detected_objects', routing_key=routing_key, body=json.dumps(message)
+                exchange='topic_logs', routing_key=routing_key, body=json.dumps(message)
                 # ,properties=pika.BasicProperties(delivery_mode = 2)
             )
             channel.close()
